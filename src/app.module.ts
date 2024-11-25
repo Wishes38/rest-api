@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -15,10 +17,17 @@ import { AuthModule } from './auth/auth.module';
         dbName: configService.get<string>('MONGO_DB_NAME'),
       }),
     }),
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 25,
+    }]),
     UsersModule,
     AuthModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [{
+    provide: APP_GUARD,
+    useClass: ThrottlerGuard,
+  }],
 })
 export class AppModule { }
