@@ -1,5 +1,6 @@
-import { Controller, Post, Body, Request, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Body, Request, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -20,5 +21,19 @@ export class AuthController {
 
         const response = await this.authService.logout(token);
         return response;
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Post('refresh-token')
+    async refreshToken(
+        @Request() req,
+        @Body('refreshToken') refreshToken: string,
+    ) {
+        const userId = req.user.userId;
+        if (!refreshToken) {
+            throw new UnauthorizedException('No refresh token provided');
+        }
+
+        return this.authService.refreshToken(userId, refreshToken);
     }
 }

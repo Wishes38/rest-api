@@ -26,8 +26,36 @@ export class AuthService {
 
   async login(user: any) {
     const payload = { email: user.email, sub: user._id, roles: user.roles };
+
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+
+    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+    await this.usersService.updateRefreshToken(user._id, hashedRefreshToken);
+
     return {
-      access_token: this.jwtService.sign(payload),
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async refreshToken(userId: string, token: string): Promise<{ accessToken: string }> {
+    const user = await this.usersService.findUserById(userId);
+
+    if (!user || !user.refreshToken) {
+      throw new UnauthorizedException('Access Denied');
+    }
+
+    const isValid = await bcrypt.compare(token, user.refreshToken);
+    if (!isValid) {
+      throw new UnauthorizedException('Invalid Refresh Token');
+    }
+
+    const payload = { email: user.email, sub: user._id, roles: user.roles };
+    const newAccessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
+
+    return {
+      accessToken: newAccessToken,
     };
   }
 
