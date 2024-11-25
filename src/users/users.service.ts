@@ -23,10 +23,7 @@ export class UsersService {
 
     async findUserByEmail(email: string): Promise<User | null> {
         const user = await this.userModel.findOne({ email }).exec();
-        if (!user) {
-            throw new UnauthorizedException('User not found');
-        }
-        return user;
+        return user || null;
     }
 
 

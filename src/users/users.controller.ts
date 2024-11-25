@@ -4,12 +4,16 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { JwtBlacklistGuard } from '../auth/guards/jwt-blacklist.guard';
 import { Roles } from '../auth/roles.decorator';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { RegisterDto } from './dto/register.dto';
 
+@ApiTags('Users')
 @Controller('users')
-@UseGuards(JwtAuthGuard, JwtBlacklistGuard, RolesGuard)
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
+    @ApiOperation({ summary: 'Register a new user' })
+    @ApiBody({ type: RegisterDto })
     @Post('register')
     async register(
         @Body() body: { email: string; password: string; roles?: string[] },
@@ -24,18 +28,39 @@ export class UsersController {
         return this.usersService.createUser(email, password, roles);
     }
 
+    @ApiOperation({ summary: 'User Profile Page' })
+    @UseGuards(JwtAuthGuard, JwtBlacklistGuard, RolesGuard)
+    @ApiBearerAuth()
     @Roles('user', 'admin')
     @Get('my-profile')
     getUserProfile(@Request() req) {
         return { message: 'Welcome User', user: req.user };
     }
 
+    @ApiOperation({ summary: 'Admin Profile Page' })
+    @UseGuards(JwtAuthGuard, JwtBlacklistGuard, RolesGuard)
+    @ApiBearerAuth()
     @Roles('admin')
     @Get('profile')
     getAdminProfile(@Request() req) {
         return { message: 'Welcome Admin', user: req.user };
     }
 
+    @ApiOperation({ summary: 'Access token and email required' })
+    @UseGuards(JwtAuthGuard, JwtBlacklistGuard, RolesGuard)
+    @ApiBearerAuth()
+    @ApiBody({
+        schema: {
+            type: 'object',
+            properties: {
+                email: {
+                    type: 'string',
+                    example: 'serkanozdemir38080@gmail.com',
+                    description: 'The email address to send the reset link to',
+                },
+            },
+        },
+    })
     @Post('request-password-reset')
     async requestPasswordReset(@Body('email') email: string) {
         console.log(`Password reset requested for email: ${email}`);
@@ -43,7 +68,7 @@ export class UsersController {
         return { message: 'Password reset link has been sent to your email.' };
     }
 
-    @UseGuards()
+    @ApiOperation({ summary: 'Validate password reset token' })
     @Get('reset-password/:token')
     async validateResetToken(@Param('token') token: string) {
         const user = await this.usersService.findUserByResetToken(token);
@@ -55,7 +80,8 @@ export class UsersController {
         return { message: 'Token is valid' };
     }
 
-    @UseGuards()
+    @ApiOperation({ summary: 'Reset password' })
+    @ApiBody({ schema: { example: { newPassword: "newpassword123" } } })
     @Post('reset-password/:token')
     async resetPassword(
         @Param('token') token: string,
