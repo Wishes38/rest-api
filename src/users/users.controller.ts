@@ -1,11 +1,12 @@
 import { BadRequestException, Body, Controller, Get, Post, UseGuards, Request, Param, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { JwtBlacklistGuard } from '../auth/guards/jwt-blacklist.guard';
 import { Roles } from '../auth/roles.decorator';
 
 @Controller('users')
-@UseGuards(JwtAuthGuard, RolesGuard) // Genel koruma
+@UseGuards(JwtAuthGuard, JwtBlacklistGuard, RolesGuard)
 export class UsersController {
     constructor(private readonly usersService: UsersService) { }
 
@@ -37,11 +38,10 @@ export class UsersController {
 
     @Post('request-password-reset')
     async requestPasswordReset(@Body('email') email: string) {
-      console.log(`Password reset requested for email: ${email}`);
-      await this.usersService.requestPasswordReset(email);
-      return { message: 'Password reset link has been sent to your email.' };
+        console.log(`Password reset requested for email: ${email}`);
+        await this.usersService.requestPasswordReset(email);
+        return { message: 'Password reset link has been sent to your email.' };
     }
-    
 
     @UseGuards()
     @Get('reset-password/:token')
