@@ -13,11 +13,12 @@ export class AuthService {
     async validateUser(email: string, password: string): Promise<any> {
         const user = await this.usersService.findUserByEmail(email);
         if (user && (await bcrypt.compare(password, user.password))) {
-            const { password, ...result } = user.toObject();
-            return result;
+          const { password, ...result } = user.toObject();
+          return result;
         }
         throw new UnauthorizedException('Invalid credentials');
-    }
+      }
+      
 
     async login(user: any) {
         const payload = { email: user.email, sub: user._id, roles: user.roles };
