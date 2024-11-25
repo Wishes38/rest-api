@@ -12,6 +12,12 @@ export class User extends Document {
   @Prop({ type: [String], default: ['user'] })
   roles: string[];
 
+  @Prop({ required: false })
+  firstName?: string;
+
+  @Prop({ required: false })
+  lastName?: string;
+
   @Prop({ default: null })
   resetPasswordToken: string | null;
 

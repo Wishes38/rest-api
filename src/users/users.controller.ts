@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Post, UseGuards, Request, Param, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Post, UseGuards, Request, Param, NotFoundException, Put, Patch } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -6,6 +6,7 @@ import { JwtBlacklistGuard } from '../auth/guards/jwt-blacklist.guard';
 import { Roles } from '../auth/roles.decorator';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -89,5 +90,18 @@ export class UsersController {
     ) {
         await this.usersService.resetPassword(token, newPassword);
         return { message: 'Your password has been reset successfully.' };
+    }
+
+    @ApiOperation({ summary: 'Update user profile' })
+    @UseGuards(JwtAuthGuard, JwtBlacklistGuard, RolesGuard)
+    @ApiBearerAuth()
+    @Roles('user', 'admin')
+    @Patch('update-profile')
+    async updateProfile(
+        @Request() req,
+        @Body() updates: UpdateProfileDto,
+    ) {
+        const userId = req.user.userId;
+        return this.usersService.updateProfile(userId, updates);
     }
 }
