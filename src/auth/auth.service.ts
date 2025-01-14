@@ -1,10 +1,11 @@
-import { forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
 import { InjectModel } from '@nestjs/mongoose';
 import { BlacklistedToken } from './schemas/blacklist.schema';
 import { Model } from 'mongoose';
+import { RegisterDto } from 'src/users/dto/register.dto';
 
 @Injectable()
 export class AuthService {
@@ -25,6 +26,10 @@ export class AuthService {
   }
 
   async login(user: any) {
+    if (!user || !user._id) {
+      throw new BadRequestException('User or user ID is undefined');
+    }
+
     const payload = { email: user.email, sub: user._id, roles: user.roles };
 
     const accessToken = this.jwtService.sign(payload, { expiresIn: '15m' });
@@ -34,6 +39,7 @@ export class AuthService {
     await this.usersService.updateRefreshToken(user._id, hashedRefreshToken);
 
     return {
+      id: user._id,
       accessToken,
       refreshToken,
     };
@@ -78,4 +84,12 @@ export class AuthService {
     return !!tokenExists;
   }
 
+  async validateGoogleUser(googleUser: RegisterDto) {
+    const user = await this.usersService.findUserByEmail(googleUser.email);
+    if (!user) {
+      return await this.usersService.createUser(googleUser);
+    }
+
+    return user;
+  }
 }

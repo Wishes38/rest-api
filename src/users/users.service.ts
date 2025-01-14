@@ -6,17 +6,21 @@ import { User } from './shemas/user.schema';
 import * as crypto from 'crypto';
 import * as nodemailer from 'nodemailer';
 import * as dotenv from 'dotenv';
+import { RegisterDto } from './dto/register.dto';
 
 @Injectable()
 export class UsersService {
     constructor(@InjectModel(User.name) private userModel: Model<User>) { }
 
-    async createUser(email: string, password: string, roles?: string[]): Promise<User> {
-        const hashedPassword = await bcrypt.hash(password, 10);
+    async createUser(registerDto: RegisterDto): Promise<User> {
+        const hashedPassword = await bcrypt.hash(registerDto.password, 10);
         const newUser = new this.userModel({
-            email,
+            email: registerDto.email,
             password: hashedPassword,
-            roles: roles || ['user'],
+            roles: registerDto.roles || ['user'],
+            firstName: registerDto.firstName ?? '',
+            lastName: registerDto.lastName ?? '',
+            avatarUrl: registerDto.avatarUrl ?? '',
         });
         return newUser.save();
     }

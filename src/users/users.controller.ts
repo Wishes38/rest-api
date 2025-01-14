@@ -7,6 +7,7 @@ import { Roles } from '../auth/roles.decorator';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { RegisterDto } from './dto/register.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { User } from './shemas/user.schema';
 
 @ApiTags('Users')
 @Controller('users')
@@ -17,16 +18,16 @@ export class UsersController {
     @ApiBody({ type: RegisterDto })
     @Post('register')
     async register(
-        @Body() body: { email: string; password: string; roles?: string[] },
-    ) {
-        const { email, password, roles } = body;
+        @Body() registerDto: RegisterDto,
+    ): Promise<User> {
+        const { email } = registerDto;
 
         const existingUser = await this.usersService.findUserByEmail(email);
         if (existingUser) {
             throw new BadRequestException('User already exists');
         }
 
-        return this.usersService.createUser(email, password, roles);
+        return this.usersService.createUser(registerDto);
     }
 
     @ApiOperation({ summary: 'User Profile Page' })

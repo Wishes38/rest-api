@@ -1,8 +1,9 @@
-import { Controller, Post, Body, Request, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Controller, Post, Body, Request, UnauthorizedException, UseGuards, Get, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { LoginDto } from './dto/login.dto';
+import { GoogleAuthGuard } from './guards/google-auth/google-auth.guard';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -44,5 +45,21 @@ export class AuthController {
         }
 
         return this.authService.refreshToken(userId, refreshToken);
+    }
+
+    @UseGuards(GoogleAuthGuard)
+    @Get('google/login')
+    async googleLogin(@Req() req: any) {
+    }
+
+    @UseGuards(GoogleAuthGuard)
+    @Get('google/callback')
+    async googleCallback(@Req() req, @Res() res) {
+        const response = await this.authService.login(req.user);
+        const redirectUrl = `${process.env.GOOGLE_CALLBACK_URL}?token=${response.accessToken}`;
+        console.log("response.accessToken:", response.accessToken);
+        console.log("response.refreshToken", response.refreshToken);
+        console.log('Successfully logged in with Google!');
+        res.redirect(redirectUrl);
     }
 }

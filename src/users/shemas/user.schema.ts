@@ -18,6 +18,9 @@ export class User extends Document {
   @Prop({ required: false })
   lastName?: string;
 
+  @Prop({ required: false })
+  avatarUrl?: string;
+
   @Prop({ default: null })
   resetPasswordToken: string | null;
 
@@ -26,6 +29,9 @@ export class User extends Document {
 
   @Prop({ default: null })
   refreshToken: string | null;
+
+  @Prop({ default: null })
+  googleId?: string | null;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
